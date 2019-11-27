@@ -2,6 +2,9 @@
 
 The script turns on the microphone to record audio from the victim's device and sends it to the MEGA website in an audio document format
 
+----
+* `Requirements change in the script:`
+
 ```python
 class Upload(object):
     def __init__(self):
@@ -15,5 +18,7 @@ class Upload(object):
  * Divides audio segments into semi - finished and transmitted segments to facilitate transmission
  * Works behind the scenes
  * Does not stop if any unexpected error occurs
-
-
+ 
+ ----- 
+ 
+ ### We disclaim responsibility for how we use the software ###
