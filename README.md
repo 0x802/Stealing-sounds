@@ -15,6 +15,7 @@ class Upload(object):
  -----
  
  * Works only when online
+ * Works only in linux system.
  * Divides audio segments into semi - finished and transmitted segments to facilitate transmission
  * Works behind the scenes
  * Does not stop if any unexpected error occurs
